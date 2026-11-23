@@ -80,10 +80,10 @@
                                 @f.Departure <i class="bi bi-arrow-right"></i> @f.Destination
                             </p>
                             <p class="small text-muted mb-1">
-                                <i class="bi bi-building"></i> @airline?.Name
+                                <i class="bi bi-building"></i> @(airline?.Name ?? "Авиакомпания не указана")
                             </p>
                             <p class="small text-muted mb-2">
-                                <i class="bi bi-airplane"></i> @aircraft?.Model
+                               <i class="bi bi-airplane"></i> @(aircraft?.Model ?? "Самолёт не указан")
                             </p>
                             <p class="mb-2"><small>🕓 @f.DepartureTime.ToString("dd.MM.yyyy HH:mm")</small></p>
                             <p class="mb-2">

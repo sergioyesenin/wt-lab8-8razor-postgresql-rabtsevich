@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using wt_lab8_8razor_postgresql_rabtsevich.Data;
 using wt_lab8_8razor_postgresql_rabtsevich.Models;
 
@@ -18,45 +18,96 @@ public class IndexModel(AppDbContext db) : PageModel
     public List<SelectListItem> AirlineOptions { get; set; } = new();
     public List<string> FlightTypes { get; set; } = new();
 
-    public async Task OnGetAsync(string? search, int? airlineId, string? flightType, bool onlyActive = false)
+    public async Task OnGetAsync(
+        string? search,
+        int? airlineId,
+        string? flightType,
+        bool onlyActive = false)
     {
         Search = search;
         AirlineId = airlineId;
         FlightType = flightType;
         OnlyActive = onlyActive;
 
-        var q = db.Flights.Include(f => f.Airline).Include(f => f.Aircraft).AsNoTracking();
+        var query = db.Flights.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
-            q = q.Where(f =>
-                f.Destination.ToLower().Contains(search.ToLower()) ||
-                f.Departure.ToLower().Contains(search.ToLower()) ||
-                f.FlightNumber.ToLower().Contains(search.ToLower()));
+        {
+            var term = search.Trim().ToLower();
+
+            query = query.Where(f =>
+                f.FlightNumber.ToLower().Contains(term) ||
+                f.Departure.ToLower().Contains(term) ||
+                f.Destination.ToLower().Contains(term));
+        }
 
         if (airlineId.HasValue)
-            q = q.Where(f => f.AirlineId == airlineId.Value);
+        {
+            query = query.Where(f => f.AirlineId == airlineId.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(flightType))
-            q = q.Where(f => f.FlightType == flightType);
+        {
+            query = query.Where(f => f.FlightType == flightType);
+        }
 
         if (onlyActive)
-            q = q.Where(f => f.IsActive);
+        {
+            query = query.Where(f => f.IsActive);
+        }
 
-        Flights = await q.OrderBy(f => f.DepartureTime).ThenBy(f => f.Id).ToListAsync();
+        // DefaultIfEmpty сохраняет рейс в результате, даже если
+        // в справочнике отсутствует его авиакомпания или самолёт.
+        var rows = await (
+            from flight in query
+            join airline in db.Airlines.AsNoTracking()
+                on flight.AirlineId equals airline.Id into airlineMatches
+            from airline in airlineMatches.DefaultIfEmpty()
+            join aircraft in db.Aircrafts.AsNoTracking()
+                on flight.AircraftId equals aircraft.Id into aircraftMatches
+            from aircraft in aircraftMatches.DefaultIfEmpty()
+            orderby flight.DepartureTime, flight.Id
+            select new
+            {
+                Flight = flight,
+                Airline = airline,
+                Aircraft = aircraft
+            }
+        ).ToListAsync();
 
-        AirlineOptions = db.Airlines
-            .Select(a => new SelectListItem(a.Name, a.Id.ToString()))
-            .ToList();
+        foreach (var row in rows)
+        {
+            row.Flight.Airline = row.Airline;
+            row.Flight.Aircraft = row.Aircraft;
+            Flights.Add(row.Flight);
+        }
 
-        FlightTypes = db.Flights
-            .Select(f => f.FlightType).Distinct().OrderBy(x => x).ToList();
+        AirlineOptions = await db.Airlines
+            .AsNoTracking()
+            .OrderBy(a => a.Name)
+            .Select(a => new SelectListItem(
+                a.Name,
+                a.Id.ToString(),
+                a.Id == airlineId))
+            .ToListAsync();
+
+        FlightTypes = await db.Flights
+            .Select(f => f.FlightType)
+            .Distinct()
+            .OrderBy(type => type)
+            .ToListAsync();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        var f = await db.Flights.FindAsync(id);
-        if (f is not null) db.Flights.Remove(f);
-        await db.SaveChangesAsync();
+        var flight = await db.Flights.FindAsync(id);
+
+        if (flight is not null)
+        {
+            db.Flights.Remove(flight);
+            await db.SaveChangesAsync();
+        }
+
         return RedirectToPage("./Index");
     }
 }
