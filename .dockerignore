@@ -2,3 +2,4 @@ bin/
 obj/
 .env
 .git/
+repomix-output.xml

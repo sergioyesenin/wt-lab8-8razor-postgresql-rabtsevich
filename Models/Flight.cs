@@ -24,9 +24,9 @@ public class Flight
     public string Destination { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Укажите время вылета")]
-    [Display(Name = "Время вылета")]
+    [Display(Name = "Время вылета (UTC)")]
     [DataType(DataType.DateTime)]
-    public DateTime DepartureTime { get; set; } = DateTime.Now.AddDays(1);
+    public DateTime DepartureTime { get; set; } = DateTime.UtcNow.AddDays(1);
 
     [Range(0.01, 1_000_000, ErrorMessage = "Цена от 0.01 до 1 000 000")]
     [Display(Name = "Цена билета")]
@@ -57,4 +57,5 @@ public class Flight
 
     public Airline? Airline { get; set; }
     public Aircraft? Aircraft { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

@@ -19,7 +19,6 @@ public class CreateModel(AppDbContext db) : PageModel
         Airline.Name = Airline.Name?.Trim() ?? string.Empty;
         Airline.IataCode = (Airline.IataCode ?? "").Trim().ToUpperInvariant();
         Airline.Country = Airline.Country?.Trim() ?? string.Empty;
-        Airline.LogoUrl = string.IsNullOrWhiteSpace(Airline.LogoUrl) ? null : Airline.LogoUrl.Trim();
         Airline.Description = string.IsNullOrWhiteSpace(Airline.Description) ? null : Airline.Description.Trim();
 
         // Бизнес-правила

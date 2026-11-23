@@ -26,10 +26,6 @@ public class Airline
     [Display(Name = "Год основания")]
     public int FoundedYear { get; set; } = 2000;
 
-    [Display(Name = "Логотип (URL)")]
-    [Url(ErrorMessage = "Некорректный URL")]
-    public string? LogoUrl { get; set; }
-
     [Display(Name = "Описание")]
     [StringLength(500, ErrorMessage = "Не более 500 символов")]
     public string? Description { get; set; }
@@ -40,4 +36,5 @@ public class Airline
     [Range(0.0, 5.0, ErrorMessage = "Рейтинг: от 0 до 5")]
     [Display(Name = "Рейтинг")]
     public decimal Rating { get; set; } = 4.0m;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

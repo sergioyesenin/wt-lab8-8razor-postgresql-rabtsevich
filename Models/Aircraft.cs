@@ -39,4 +39,5 @@ public class Aircraft
     [Display(Name = "В эксплуатации")]
     public bool IsOperational { get; set; } = true;
     public Airline? Airline { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
